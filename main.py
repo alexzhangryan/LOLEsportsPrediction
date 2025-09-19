@@ -5,9 +5,11 @@ import textwrap
 
 
 df = pd.read_csv("match_data.csv")
-df = df.drop(columns=["datacompleteness", "url", "participantid", "playerid", "teamid", "dragons (type unknown)"])
+df = df.drop(columns=["datacompleteness", "url", "participantid", "playerid", "teamid"])
 df = df.fillna({"playername": "none"})
 teams = df[df["playername"] == "none"]
+teams = teams.drop(columns=["doublekills", "triplekills", "quadrakills", "pentakills", "firstbloodkill", "firstbloodassist", "firstbloodvictim", "elementaldrakes", "opp_elementaldrakes", "infernals", "mountains", "clouds", "oceans", "chemtechs", "hextechs", "dragons (type unknown)", "elders", "opp_elders", "firstherald", "atakhans", "opp_atakhans", "firstmidtower", "firsttothreetowers", "turretplates", "opp_turretplates", "damagemitigatedperminute", "damagetotowers", "gpr", "cspm", "damageshare", "earnedgoldshare", "total cs", "minionkills", "firstbaron", "champion", "playername", "position", "date", "year"])
+teams = teams.iloc[:, :60]
 teams2025 = teams[(teams["league"] == "LCK") | (teams["league"] == "LPL") | (teams["league"] == "LCK") | (teams["league"] == "LTA N") | (teams["league"] == "LTA S") | (teams["league"] == "LCP") | (teams["league"] == "LEC") | (teams["league"] == "EWC") | (teams["league"] == "FST") | (teams["league"] == "MSI") | (teams["league"] == "WLDs")]
 players = df[df["playername"] != "none"]
 
@@ -20,6 +22,7 @@ blue = blue.rename(columns={"blue_gameid": "gameid"})
 red = red.rename(columns={"red_gameid": "gameid"})
 
 matches = pd.merge(blue, red, on="gameid", suffixes=("",""))
+print(teams2025.head(10).to_string())
 region_strength2025 = {
     "LCK": 1755,
     "LPL": 1604,
