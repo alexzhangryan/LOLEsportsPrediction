@@ -41,9 +41,7 @@ region_strength2025 = {
     "LCP": 1294,
     "LTA S": 824
 }
-training_data = matches.drop(columns=["gameid", "red_result"])
-result_column = training_data.pop("blue_result")
-training_data.insert(0, "blue_result", result_column)
+
 
 #initialize players
 players = df[df["playername"] != "none"]
@@ -116,13 +114,14 @@ players_match_metadata = players2025.iloc[:, 0:8]
 players_match_metadata = players_match_metadata.drop_duplicates(subset="gameid")
 player_matches = pd.merge(players_match_metadata, player_matches, on="gameid", suffixes=("",""))
 
-#print(player_matches.head(15).to_string())
+
 
 team_elo = {}
 player_elo = {}
 team_region = {}
 player_region = {}
-winrate = {}
+player_blue_winrate = {}
+player_red_winrate = {}
 #%%
 def expectedScore(rating_a, rating_b):
     return (1/(1 + 10**((rating_b-rating_a)/400)))
@@ -174,6 +173,7 @@ def initializeTeams(teams):
             
 
 def initializePlayers(players):
+    
     for gameid, player in players.groupby("gameid"):
         blue_top = player["blue_playername_top"].values[0]
         player_elo[blue_top] = 1500
@@ -230,6 +230,7 @@ def initializePlayers(players):
             pass
         player_elo[blue_top] = elos[0]
         player_elo[red_top] = elos[1]
+
 
         #jungle
 
@@ -310,23 +311,85 @@ def initializePlayers(players):
             pass
         player_elo[blue_sup] = elos[0]
         player_elo[red_sup] = elos[1]
+    calcWinrate(players2025)
+    for gameid, player in players.groupby("gameid"):
+        blue_top = player["blue_playername_top"].values[0]
+        blue_jng = player["blue_playername_jng"].values[0]
+        blue_mid = player["blue_playername_mid"].values[0]
+        blue_bot = player["blue_playername_bot"].values[0]
+        blue_sup = player["blue_playername_sup"].values[0]
+
+        red_top = player["red_playername_top"].values[0]
+        red_jng = player["red_playername_jng"].values[0]
+        red_mid = player["red_playername_mid"].values[0]
+        red_bot = player["red_playername_bot"].values[0]
+        red_sup = player["red_playername_sup"].values[0]
+
+        players.loc[player.index, "blue_elo_top"] = player_elo.get(blue_top)
+        players.loc[player.index, "blue_elo_jng"] = player_elo.get(blue_jng)
+        players.loc[player.index, "blue_elo_mid"] = player_elo.get(blue_mid)
+        players.loc[player.index, "blue_elo_bot"] = player_elo.get(blue_bot)
+        players.loc[player.index, "blue_elo_sup"] = player_elo.get(blue_sup)
+
+        players.loc[player.index, "blue_wr_top"] = player_blue_winrate.get(blue_top)
+        players.loc[player.index, "blue_wr_jng"] = player_blue_winrate.get(blue_jng)
+        players.loc[player.index, "blue_wr_mid"] = player_blue_winrate.get(blue_mid)
+        players.loc[player.index, "blue_wr_bot"] = player_blue_winrate.get(blue_bot)
+        players.loc[player.index, "blue_wr_sup"] = player_blue_winrate.get(blue_sup)
+
+        players.loc[player.index, "red_elo_top"] = player_elo.get(red_top)
+        players.loc[player.index, "red_elo_jng"] = player_elo.get(red_jng)
+        players.loc[player.index, "red_elo_mid"] = player_elo.get(red_mid)
+        players.loc[player.index, "red_elo_bot"] = player_elo.get(red_bot)
+        players.loc[player.index, "red_elo_sup"] = player_elo.get(red_sup)
+
+        players.loc[player.index, "red_wr_top"] = player_red_winrate.get(red_top)
+        players.loc[player.index, "red_wr_jng"] = player_red_winrate.get(red_jng)
+        players.loc[player.index, "red_wr_mid"] = player_red_winrate.get(red_mid)
+        players.loc[player.index, "red_wr_bot"] = player_red_winrate.get(red_bot)
+        players.loc[player.index, "red_wr_sup"] = player_red_winrate.get(red_sup)
+
+def calcWinrate(players):
+    for player in player_elo:
+        current = players[players["playername"] == player]
+        curr_blue = current[current["side"] == "Blue"]
+        if not curr_blue.empty:
+            blue_wr = curr_blue["result"].mean()
+        else:
+            blue_wr = 0.0
+        curr_red = current[current["side"] == "Red"]
+        if not curr_red.empty:
+            red_wr = curr_red["result"].mean()
+        else:
+            red_wr = 0.0
+        player_blue_winrate[player] = round(float(blue_wr), 3)
+        player_red_winrate[player] = round(float(red_wr), 3)
+
 
 initializePlayers(player_matches)
-
-#%%
+    #%%
 
 initializeTeams(teams2025)
 
 
 
-sorted_elo = sorted(player_elo.items(), key=lambda x:x[1])
+"""sorted_elo = sorted(player_blue_winrate.items(), key=lambda x:x[1])
 elo_string = str(sorted_elo)
-print(textwrap.fill(elo_string, width=200))
+print(textwrap.fill(elo_string, width=200))"""
 
+training_data = matches.drop(columns=["red_result"])
+result_column = training_data.pop("blue_result")
+training_data.insert(0, "blue_result", result_column)
 
+player_training_data = player_matches.drop(columns=["red_result_top", "red_result_mid", "red_result_jng", "red_result_bot", "red_result_sup", "blue_result_jng", "blue_result_mid", "blue_result_bot", "blue_result_sup"])
+result_column = player_training_data.pop("blue_result_top")
+player_training_data.insert(0, "blue_result_top", result_column)
+
+ultra_train = pd.merge(player_training_data, training_data, on="gameid", suffixes=("",""))
+ultra_train = ultra_train.drop(columns=["gameid"])
 
 #print(training_data.columns.tolist())
-encoded_data = pd.get_dummies(training_data, dtype=int)
+encoded_data = pd.get_dummies(ultra_train, dtype=int)
 #print(encoded_data.to_string())
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
@@ -343,12 +406,12 @@ y_pred = rf.predict(X_test)
 #print(len(y))
 #print(len(y_pred))
 rf.score(X_test, y_test)
-#print(classification_report(y_test, y_pred))
+print(classification_report(y_test, y_pred))
 features = pd.DataFrame({
     "importance": rf.feature_importances_, 
     "feature": X.columns
 })
 sorted_features = features.sort_values(by="importance", ascending=False)
-#print(sorted_features.to_string())
+print(sorted_features.head(50).to_string())
 
 #%%
