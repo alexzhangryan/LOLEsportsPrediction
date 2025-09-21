@@ -18,6 +18,8 @@ teams = teams.drop(columns=["doublekills", "triplekills", "quadrakills", "pentak
 teams = teams.iloc[:, :60]
 teams2025 = teams[(teams["league"] == "LCK") | (teams["league"] == "LPL") | (teams["league"] == "LCK") | (teams["league"] == "LTA N") | (teams["league"] == "LTA S") | (teams["league"] == "LCP") | (teams["league"] == "LEC") | (teams["league"] == "EWC") | (teams["league"] == "FST") | (teams["league"] == "MSI") | (teams["league"] == "WLDs")]
 
+#TEAMS
+
 blue = teams2025[teams2025["side"] == "Blue"].copy()
 red = teams2025[teams2025["side"] == "Red"].copy()
 blue = blue.add_prefix("blue_")
@@ -49,6 +51,8 @@ players = players.drop(columns=[ "pick1", "pick2", "pick3", "pick4", "pick5", "d
 players = players.iloc[:, :48]
 players2025 = players[(players["league"] == "LCK") | (players["league"] == "LPL") | (players["league"] == "LCK") | (players["league"] == "LTA N") | (players["league"] == "LTA S") | (players["league"] == "LCP") | (players["league"] == "LEC") | (players["league"] == "EWC") | (players["league"] == "FST") | (players["league"] == "MSI") | (players["league"] == "WLDs")]
 
+#PLAYER DATA
+#%%
 blue_players = players2025[players2025["side"] == "Blue"].copy()
 red_players = players2025[players2025["side"] == "Red"].copy()
 
@@ -114,7 +118,111 @@ players_match_metadata = players2025.iloc[:, 0:8]
 players_match_metadata = players_match_metadata.drop_duplicates(subset="gameid")
 player_matches = pd.merge(players_match_metadata, player_matches, on="gameid", suffixes=("",""))
 
+#NO GAME DATA
 
+player_averages = {}
+
+for col in players2025.select_dtypes(include="number").columns:
+    player_averages[col] = players2025.groupby("playername")[col].mean()
+
+player_avgs = pd.DataFrame(player_averages)
+player_avgs = player_avgs.drop(columns=["year", "playoffs", "game", "patch", "result"])
+player_avgs = player_avgs.add_prefix("avg_")
+player_avgs = player_avgs.reset_index()
+
+
+players_no_game_data = players2025.iloc[:, 0:12]
+players_no_game_data["result"] = players2025["result"].copy()
+results_col = players_no_game_data.pop("result")
+players_no_game_data.insert(0, "result", results_col)
+#%%
+
+blue_players = players_no_game_data[players_no_game_data["side"] == "Blue"].copy()
+red_players = players_no_game_data[players_no_game_data["side"] == "Red"].copy()
+
+blue_players = blue_players.drop(columns=["league", "year", "split", "playoffs", "date", "patch", "game"])
+red_players = red_players.drop(columns=["league", "year", "split", "playoffs", "date", "patch", "game"])
+
+blue_players_ids = set(blue_players["gameid"])
+red_players_ids = set(red_players["gameid"])
+
+blue_top = blue_players[blue_players["position"] == "top"].copy()
+blue_jng = blue_players[blue_players["position"] == "jng"].copy()
+blue_mid = blue_players[blue_players["position"] == "mid"].copy()
+blue_bot = blue_players[blue_players["position"] == "bot"].copy()
+blue_sup = blue_players[blue_players["position"] == "sup"].copy()
+
+red_top = red_players[red_players["position"] == "top"].copy()
+red_jng = red_players[red_players["position"] == "jng"].copy()
+red_mid = red_players[red_players["position"] == "mid"].copy()
+red_bot = red_players[red_players["position"] == "bot"].copy()
+red_sup = red_players[red_players["position"] == "sup"].copy()
+
+blue_top = pd.merge(blue_top, player_avgs, on="playername", suffixes=("",""))
+blue_jng = pd.merge(blue_jng, player_avgs, on="playername", suffixes=("",""))
+blue_mid = pd.merge(blue_mid, player_avgs, on="playername", suffixes=("",""))
+blue_bot = pd.merge(blue_bot, player_avgs, on="playername", suffixes=("",""))
+blue_sup = pd.merge(blue_sup, player_avgs, on="playername", suffixes=("",""))
+
+red_top = pd.merge(red_top, player_avgs, on="playername", suffixes=("",""))
+red_jng = pd.merge(red_jng, player_avgs, on="playername", suffixes=("",""))
+red_mid = pd.merge(red_mid, player_avgs, on="playername", suffixes=("",""))
+red_bot = pd.merge(red_bot, player_avgs, on="playername", suffixes=("",""))
+red_sup = pd.merge(red_sup, player_avgs, on="playername", suffixes=("",""))
+
+blue_top = blue_top.add_prefix("blue_top_")
+blue_jng = blue_jng.add_prefix("blue_jng_")
+blue_mid = blue_mid.add_prefix("blue_mid_")
+blue_bot = blue_bot.add_prefix("blue_bot_")
+blue_sup = blue_sup.add_prefix("blue_sup_")
+
+red_top = red_top.add_prefix("red_top_")
+red_jng = red_jng.add_prefix("red_jng_")
+red_mid = red_mid.add_prefix("red_mid_")
+red_bot = red_bot.add_prefix("red_bot_")
+red_sup = red_sup.add_prefix("red_sup_")
+
+#%%
+blue_top = blue_top.drop(columns=["blue_top_side", "blue_top_position"])
+blue_top = blue_top.rename(columns={"blue_top_teamname": "blue_teamname"})
+blue_top = blue_top.rename(columns={"blue_top_result": "result"})
+blue_top_col = blue_top.pop("blue_teamname")
+blue_top.insert(1, "blue_teamname", blue_top_col)
+
+blue_jng = blue_jng.drop(columns=["blue_jng_side", "blue_jng_position", "blue_jng_teamname", "blue_jng_result"])
+
+blue_mid = blue_mid.drop(columns=["blue_mid_side", "blue_mid_position", "blue_mid_teamname", "blue_mid_result"])
+
+blue_bot = blue_bot.drop(columns=["blue_bot_side", "blue_bot_position", "blue_bot_teamname", "blue_bot_result"])
+
+blue_sup = blue_sup.drop(columns=["blue_sup_side", "blue_sup_position", "blue_sup_teamname", "blue_sup_result"])
+
+red_top = red_top.drop(columns=["red_top_side", "red_top_position", "red_top_result"])
+red_top = red_top.rename(columns={"red_top_teamname": "red_teamname"})
+red_top_col = red_top.pop("red_teamname")
+red_top.insert(1, "red_teamname", red_top_col)
+
+red_jng = red_jng.drop(columns=["red_jng_side", "red_jng_position", "red_jng_teamname", "red_jng_result"])
+
+red_mid = red_mid.drop(columns=["red_mid_side", "red_mid_position", "red_mid_teamname", "red_mid_result"])
+
+red_bot = red_bot.drop(columns=["red_bot_side", "red_bot_position", "red_bot_teamname", "red_bot_result"])
+
+red_sup = red_sup.drop(columns=["red_sup_side", "red_sup_position", "red_sup_teamname", "red_sup_result"])
+
+blue_top = blue_top.rename(columns={"blue_top_gameid": "gameid"})
+blue_jng = blue_jng.rename(columns={"blue_jng_gameid": "gameid"})
+blue_mid = blue_mid.rename(columns={"blue_mid_gameid": "gameid"})
+blue_bot = blue_bot.rename(columns={"blue_bot_gameid": "gameid"})
+blue_sup = blue_sup.rename(columns={"blue_sup_gameid": "gameid"})
+
+red_top = red_top.rename(columns={"red_top_gameid": "gameid"})
+red_jng = red_jng.rename(columns={"red_jng_gameid": "gameid"})
+red_mid = red_mid.rename(columns={"red_mid_gameid": "gameid"})
+red_bot = red_bot.rename(columns={"red_bot_gameid": "gameid"})
+red_sup = red_sup.rename(columns={"red_sup_gameid": "gameid"})
+
+#%%
 
 team_elo = {}
 player_elo = {}
@@ -365,13 +473,70 @@ def calcWinrate(players):
         player_blue_winrate[player] = round(float(blue_wr), 3)
         player_red_winrate[player] = round(float(red_wr), 3)
 
-
 initializePlayers(player_matches)
-    #%%
-
 initializeTeams(teams2025)
 
+for gameid, player in blue_top.groupby("gameid"):
+    blue_player = player["blue_top_playername"].values[0]
+    blue_top.loc[player.index, "blue_top_elo"] = player_elo.get(blue_player)
+    blue_top.loc[player.index, "blue_top_wr"] = player_blue_winrate.get(blue_player)
+for gameid, player in blue_jng.groupby("gameid"):
+    blue_player = player["blue_jng_playername"].values[0]
+    blue_jng.loc[player.index, "blue_jng_elo"] = player_elo.get(blue_player)
+    blue_jng.loc[player.index, "blue_jng_wr"] = player_blue_winrate.get(blue_player)
+for gameid, player in blue_mid.groupby("gameid"):
+    blue_player = player["blue_mid_playername"].values[0]
+    blue_mid.loc[player.index, "blue_mid_elo"] = player_elo.get(blue_player)
+    blue_mid.loc[player.index, "blue_mid_wr"] = player_blue_winrate.get(blue_player)
+for gameid, player in blue_bot.groupby("gameid"):
+    blue_player = player["blue_bot_playername"].values[0]
+    blue_bot.loc[player.index, "blue_bot_elo"] = player_elo.get(blue_player)
+    blue_bot.loc[player.index, "blue_bot_wr"] = player_blue_winrate.get(blue_player)
+for gameid, player in blue_sup.groupby("gameid"):
+    blue_player = player["blue_sup_playername"].values[0]
+    blue_sup.loc[player.index, "blue_sup_elo"] = player_elo.get(blue_player)
+    blue_sup.loc[player.index, "blue_sup_wr"] = player_blue_winrate.get(blue_player)
 
+for gameid, player in red_top.groupby("gameid"):
+    red_player = player["red_top_playername"].values[0]
+    red_top.loc[player.index, "red_top_elo"] = player_elo.get(red_player)
+    red_top.loc[player.index, "red_top_wr"] = player_red_winrate.get(red_player)
+for gameid, player in red_jng.groupby("gameid"):
+    red_player = player["red_jng_playername"].values[0]
+    red_jng.loc[player.index, "red_jng_elo"] = player_elo.get(red_player)
+    red_jng.loc[player.index, "red_jng_wr"] = player_red_winrate.get(red_player)
+for gameid, player in red_mid.groupby("gameid"):
+    red_player = player["red_mid_playername"].values[0]
+    red_mid.loc[player.index, "red_mid_elo"] = player_elo.get(red_player)
+    red_mid.loc[player.index, "red_mid_wr"] = player_red_winrate.get(red_player)
+for gameid, player in red_bot.groupby("gameid"):
+    red_player = player["red_bot_playername"].values[0]
+    red_bot.loc[player.index, "red_bot_elo"] = player_elo.get(red_player)
+    red_bot.loc[player.index, "red_bot_wr"] = player_red_winrate.get(red_player)
+for gameid, player in red_sup.groupby("gameid"):
+    red_player = player["red_sup_playername"].values[0]
+    red_sup.loc[player.index, "red_sup_elo"] = player_elo.get(red_player)
+    red_sup.loc[player.index, "red_sup_wr"] = player_red_winrate.get(red_player)
+
+blue_matches_no_data = pd.merge(blue_top, blue_jng, on="gameid", suffixes=("",""))
+blue_matches_no_data = pd.merge(blue_matches_no_data, blue_mid, on="gameid", suffixes=("",""))
+blue_matches_no_data = pd.merge(blue_matches_no_data, blue_bot, on="gameid", suffixes=("",""))
+blue_matches_no_data = pd.merge(blue_matches_no_data, blue_sup, on="gameid", suffixes=("",""))
+
+
+red_matches_no_data = pd.merge(red_top, red_jng, on="gameid", suffixes=("",""))
+red_matches_no_data = pd.merge(red_matches_no_data, red_mid, on="gameid", suffixes=("",""))
+red_matches_no_data = pd.merge(red_matches_no_data, red_bot, on="gameid", suffixes=("",""))
+red_matches_no_data = pd.merge(red_matches_no_data, red_sup, on="gameid", suffixes=("",""))
+
+player_matches_no_data = pd.merge(blue_matches_no_data, red_matches_no_data, on="gameid", suffixes=("",""))
+players_match_metadata = players2025.iloc[:, 0:8]
+players_match_metadata = players_match_metadata.drop_duplicates(subset="gameid")
+player_matches_no_data = pd.merge(players_match_metadata, player_matches_no_data, on="gameid", suffixes=("",""))
+results_column = player_matches_no_data.pop("result")
+player_matches_no_data.insert(0, "result", results_column)
+
+#%%
 
 """sorted_elo = sorted(player_blue_winrate.items(), key=lambda x:x[1])
 elo_string = str(sorted_elo)
@@ -388,8 +553,10 @@ player_training_data.insert(0, "blue_result_top", result_column)
 ultra_train = pd.merge(player_training_data, training_data, on="gameid", suffixes=("",""))
 ultra_train = ultra_train.drop(columns=["gameid"])
 
+predict_train = player_matches_no_data.drop(columns=["gameid", "playoffs", "date", "game", "patch", "split", "league"])
+
 #print(training_data.columns.tolist())
-encoded_data = pd.get_dummies(ultra_train, dtype=int)
+encoded_data = pd.get_dummies(predict_train, dtype=int)
 #print(encoded_data.to_string())
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
