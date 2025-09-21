@@ -17,7 +17,7 @@ test_data = pd.read_csv("predict_train.csv")
 test_data = test_data.drop(columns=["Unnamed: 0", "result"])
 #print(test_data.head(1).ts())
 
-def build_data(blue_team, red_team):
+def build_data_row(blue_team, red_team):
     df = pd.DataFrame()
     blue_team_found = False
     red_team_found = False
@@ -55,6 +55,12 @@ def build_data(blue_team, red_team):
     match_row["bot_elo_diff"] = match_row["blue_bot_elo"].values[0] - match_row["red_bot_elo"].values[0]
     match_row["sup_elo_diff"] = match_row["blue_sup_elo"].values[0] - match_row["red_sup_elo"].values[0]
     return match_row
+
+def build_data(blue_team, red_team):
+    blue_row = build_data_row(blue_team, red_team)
+    red_row = build_data_row(red_team, blue_team)
+    return pd.concat([blue_row, red_row])
+
 
 #print(build_data("Weibo Gaming", "Oh My God").ts())
 # %%

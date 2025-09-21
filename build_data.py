@@ -276,12 +276,14 @@ def initializeTeamElo(matches):
 
 #%%
 def initializeTeams(teams):
-    for team in teams.itertuples():
-        team_elo[team[8]] = 1500
-        if team[2] != "FST" and team[2] != "EWC" and team[2] != "MSI" and team[2] != "WLDs":
-            team_region[team[12]] = team[2]
+    for gameid, team in teams.groupby("gameid"):
+        team_elo[team["teamname"].values[0]] = 1500
+        if team["league"].values[0] != "FST" and team["league"].values[0] != "EWC" and team["league"].values[0] != "MSI" and team["league"].values[0] != "WLDs":
+            team_region[team["teamname"].values[0]] = team["league"].values[0]
     initializeTeamElo(matches)
-            
+
+initializeTeams(teams2025)
+#%%
 
 def initializePlayers(players):
     
@@ -477,7 +479,7 @@ def calcWinrate(players):
         player_red_winrate[player] = round(float(red_wr), 3)
 
 initializePlayers(player_matches)
-initializeTeams(teams2025)
+#%%
 
 for gameid, player in blue_top.groupby("gameid"):
     blue_player = player["blue_top_playername"].values[0]
@@ -568,9 +570,9 @@ for gameid, match in player_matches_no_data.groupby("gameid"):
 
 #%%
 
-"""sorted_elo = sorted(player_blue_winrate.items(), key=lambda x:x[1])
+sorted_elo = sorted(team_elo.items(), key=lambda x:x[1])
 elo_string = str(sorted_elo)
-print(textwrap.fill(elo_string, width=200))"""
+print(textwrap.fill(elo_string, width=200))
 
 training_data = matches.drop(columns=["red_result"])
 result_column = training_data.pop("blue_result")

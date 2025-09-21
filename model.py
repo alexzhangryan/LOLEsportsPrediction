@@ -76,10 +76,10 @@ y_pred = rf.predict(X_test)
 
 print(classification_report(y_test, y_pred))
 
-match_row = create_prediction_df.build_data("FlyQuest", "T1")
+match_row = create_prediction_df.build_data("DN Freecs", "T1")
 #print(training_data.head(1).to_string())
 #print(match_row.to_string())
-
+#%%
 encoded_data = pd.get_dummies(match_row, dtype=int)
 X = encoded_data
 X_predict = X[useful_features]
@@ -87,8 +87,38 @@ X_predict = X[useful_features]
 prediction = rf.predict(X_predict)
 probability = rf.predict_proba(X_predict)
 
-print("Fly Win:", prediction[0])
-print("Confidence scores:", probability[0]) 
+print(prediction)
+print(probability)
+
+series_wins = 0
+blue_side = True
+
+for _ in range(100000):
+
+    score, opp_score = 0, 0
+    game_number = 1
+    
+    while score < 3 and opp_score < 3:
+        blue_side = not blue_side
+        if blue_side:
+            p_blue_win = probability[0][1]
+            if np.random.rand() < p_blue_win:
+                score += 1
+            else:
+                opp_score += 1
+        else:
+            p_blue_win = probability[1][1]
+            if np.random.rand() < p_blue_win:
+                opp_score += 1
+            else:
+                score += 1
+        game_number += 1
+    if score == 3:
+        series_wins += 1
+    
+final_score = series_wins / 100000
+
+print(final_score)
 
 
 #print(sorted_features.tail(50).to_string(), len(sorted_features), len(feature_importance))
