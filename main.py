@@ -3,11 +3,14 @@ from cycler import V
 from matplotlib import pyplot as plt
 import pandas as pd
 import textwrap
-from sklearn.model_selection import train_test_split
+from sklearn.experimental import enable_halving_search_cv
+from sklearn.model_selection import HalvingGridSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import OneHotEncoder
 import numpy as np
 from sklearn.metrics import classification_report
+import xgboost as xgb
 
 
 df = pd.read_csv("match_data.csv")
@@ -518,6 +521,7 @@ for gameid, player in red_sup.groupby("gameid"):
     red_sup.loc[player.index, "red_sup_elo"] = player_elo.get(red_player)
     red_sup.loc[player.index, "red_sup_wr"] = player_red_winrate.get(red_player)
 
+
 blue_matches_no_data = pd.merge(blue_top, blue_jng, on="gameid", suffixes=("",""))
 blue_matches_no_data = pd.merge(blue_matches_no_data, blue_mid, on="gameid", suffixes=("",""))
 blue_matches_no_data = pd.merge(blue_matches_no_data, blue_bot, on="gameid", suffixes=("",""))
@@ -536,6 +540,32 @@ player_matches_no_data = pd.merge(players_match_metadata, player_matches_no_data
 results_column = player_matches_no_data.pop("result")
 player_matches_no_data.insert(0, "result", results_column)
 
+#calculate elo differentials
+for gameid, match in player_matches_no_data.groupby("gameid"):
+        blue_team = match["blue_teamname"].values[0]
+        red_team = match["red_teamname"].values[0]
+        player_matches_no_data.loc[match.index, "blue_elo"] = team_elo.get(blue_team)
+        player_matches_no_data.loc[match.index, "red_elo"] = team_elo.get(red_team)
+        player_matches_no_data.loc[match.index, "elo_diff"] = team_elo.get(blue_team) - team_elo.get(red_team)
+
+        blue_top = match["blue_top_playername"].values[0]
+        blue_jng = match["blue_jng_playername"].values[0]
+        blue_mid = match["blue_mid_playername"].values[0]
+        blue_bot = match["blue_bot_playername"].values[0]
+        blue_sup = match["blue_sup_playername"].values[0]
+
+        red_top = match["red_top_playername"].values[0]
+        red_jng = match["red_jng_playername"].values[0]
+        red_mid = match["red_mid_playername"].values[0]
+        red_bot = match["red_bot_playername"].values[0]
+        red_sup = match["red_sup_playername"].values[0]
+
+        player_matches_no_data.loc[match.index, "top_elo_diff"] = player_elo.get(blue_top) - player_elo.get(red_top)
+        player_matches_no_data.loc[match.index, "jng_elo_diff"] = player_elo.get(blue_jng) - player_elo.get(red_jng)
+        player_matches_no_data.loc[match.index, "mid_elo_diff"] = player_elo.get(blue_mid) - player_elo.get(red_mid)
+        player_matches_no_data.loc[match.index, "bot_elo_diff"] = player_elo.get(blue_bot) - player_elo.get(red_bot)
+        player_matches_no_data.loc[match.index, "sup_elo_diff"] = player_elo.get(blue_sup) - player_elo.get(red_sup)
+
 #%%
 
 """sorted_elo = sorted(player_blue_winrate.items(), key=lambda x:x[1])
@@ -553,9 +583,9 @@ player_training_data.insert(0, "blue_result_top", result_column)
 ultra_train = pd.merge(player_training_data, training_data, on="gameid", suffixes=("",""))
 ultra_train = ultra_train.drop(columns=["gameid"])
 
-predict_train = player_matches_no_data.drop(columns=["gameid", "playoffs", "date", "game", "patch", "split", "league"])
+predict_train = player_matches_no_data.drop(columns=["gameid", "playoffs", "date", "game", "patch", "split", "league", "blue_teamname", "year", "red_teamname", "blue_top_playername", "blue_jng_playername", "blue_mid_playername", "blue_bot_playername", "blue_sup_playername", "red_top_playername", "red_jng_playername", "red_mid_playername", "red_bot_playername", "red_sup_playername"])
 
-#print(training_data.columns.tolist())
+#print(predict_train.head(25).to_string(), len(predict_train))
 encoded_data = pd.get_dummies(predict_train, dtype=int)
 #print(encoded_data.to_string())
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
@@ -565,20 +595,55 @@ y = encoded_data.iloc[:, 0]
 
 #print(training_data.to_string())
 #%%
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=17, test_size=0.2)
-rf = RandomForestClassifier()
-rf.fit(X_train, y_train)
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=17, test_size=0.2)
+rf = xgb.XGBClassifier(tree_method="hist", early_stopping_rounds=2)
+rf.fit(X_train, y_train, eval_set=[(X_test, y_test)])
 
 y_pred = rf.predict(X_test)
 #print(len(y))
 #print(len(y_pred))
 rf.score(X_test, y_test)
+
+
 print(classification_report(y_test, y_pred))
-features = pd.DataFrame({
+feature_importance = pd.DataFrame({
     "importance": rf.feature_importances_, 
     "feature": X.columns
 })
-sorted_features = features.sort_values(by="importance", ascending=False)
-print(sorted_features.head(50).to_string())
+
+#second retrain
+
+useful_features = feature_importance[feature_importance["importance"] > 0]["feature"]
+
+X_reduced = X[useful_features]
+
+split_index = int(len(X_reduced) * 0.8)
+
+X_train, X_test = X_reduced.iloc[:split_index], X_reduced.iloc[split_index:]
+y_train, y_test = y.iloc[:split_index], y.iloc[split_index:]
+
+
+rf = xgb.XGBClassifier(
+    tree_methods="hist",
+    n_estimators = 1000,
+    learning_rate = 0.1,
+    max_depth= 3,
+    min_child_weight = 7,
+    gamma = 0.1,
+    subsample = 0.8,
+    colsample_bytree = 0.8,
+    eta = 0.1,
+    early_stopping_rounds = 10,
+    eval_metrics = "logloss"
+)
+
+rf.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
+
+y_pred = rf.predict(X_test)
+
+print(classification_report(y_test, y_pred))
+
+
+#print(sorted_features.tail(50).to_string(), len(sorted_features), len(feature_importance))
 
 #%%
