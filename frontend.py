@@ -21,4 +21,4 @@ team2 = st.selectbox(
 
 if team1 != None and team2 != None:
         prediction = create_prediction_df.predict(team1, team2)
-        st.write(prediction)
+        st.header(prediction)
