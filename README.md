@@ -14,7 +14,7 @@ To check it out go to this link: [streamlit app](https://alexzhangryan-lolesport
 2. Navigte to Project and Install Required Dependencies
    ```bash
    cd ./LOLEsportsRandomForest
-   npm install
+   pip install
    ```
 3. Start the Dev Server
    ```bash
