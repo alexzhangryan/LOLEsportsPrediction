@@ -2,5 +2,4 @@ streamlit
 joblib
 pandas
 scikit-learn
-create_prediction_df
 xgboost
