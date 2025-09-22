@@ -1,4 +1,6 @@
 #%%
+import joblib
+import numpy as np
 import pandas as pd
 
 pd.DataFrame.ts = pd.DataFrame.to_string
@@ -62,5 +64,50 @@ def build_data(blue_team, red_team):
     return pd.concat([blue_row, red_row])
 
 
-#print(build_data("Weibo Gaming", "Oh My God").ts())
-# %%
+def predict(blue_team, red_team):
+    match_row = build_data(blue_team, red_team)
+    encoded_data = pd.get_dummies(match_row, dtype=int)
+
+    rf = joblib.load("Prediction-Model.job")
+    useful_features = pd.read_csv("useful_features.csv")["feature"].tolist()
+
+    X = encoded_data
+    X_predict = X[useful_features]
+
+    prediction = rf.predict(X_predict)
+    probability = rf.predict_proba(X_predict)
+
+    series_wins = 0
+    blue_side = True
+
+    for _ in range(100000):
+
+        score, opp_score = 0, 0
+        game_number = 1
+        
+        while score < 3 and opp_score < 3:
+            blue_side = not blue_side
+            if blue_side:
+                p_blue_win = probability[0][1]
+                if np.random.rand() < p_blue_win:
+                    score += 1
+                else:
+                    opp_score += 1
+            else:
+                p_blue_win = probability[1][1]
+                if np.random.rand() < p_blue_win:
+                    opp_score += 1
+                else:
+                    score += 1
+            game_number += 1
+        if score == 3:
+            series_wins += 1
+        
+    final_score = round(series_wins / 1000, 1)
+
+    if final_score >= 50:
+        return f"{blue_team} will win with {final_score}% confidence"
+    else:
+        return f"{red_team} will win with {100 - final_score}% confidence"
+
+#%%

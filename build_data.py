@@ -570,9 +570,9 @@ for gameid, match in player_matches_no_data.groupby("gameid"):
 
 #%%
 
-sorted_elo = sorted(team_elo.items(), key=lambda x:x[1])
-elo_string = str(sorted_elo)
-print(textwrap.fill(elo_string, width=200))
+#sorted_elo = sorted(team_elo.items(), key=lambda x:x[1])
+#elo_string = str(sorted_elo)
+#print(textwrap.fill(elo_string, width=200))
 
 training_data = matches.drop(columns=["red_result"])
 result_column = training_data.pop("blue_result")
@@ -594,3 +594,6 @@ players_matches_export.to_csv("players_export.csv")
 predict_train.to_csv("predict_train.csv")
 training_data.to_csv("team_training_data.csv")
 player_training_data.to_csv("player_training_data.csv")
+team_list = list(team_region.keys())
+team_dataframe = pd.DataFrame(team_list, columns=["team"])
+team_dataframe.to_csv("teams.csv", index=False)
