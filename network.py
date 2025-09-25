@@ -15,7 +15,7 @@ import torch.nn.functional as F
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 input_size = 318
-hidden_size = 128
+hidden_size = 500
 num_classes = 2
 num_epochs = 100
 batch_size = 32
@@ -139,4 +139,3 @@ disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["loss", "win"
 disp.plot(cmap=plt.cm.Blues)
 plt.show()
 print(classification_report(all_labels, all_preds, target_names=["Loss", "Win"]))
-
