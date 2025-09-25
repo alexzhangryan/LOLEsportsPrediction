@@ -3,6 +3,7 @@ from cycler import V
 from matplotlib import pyplot as plt
 import pandas as pd
 import textwrap
+from sklearn.metrics import ConfusionMatrixDisplay, accuracy_score, confusion_matrix
 from sklearn.experimental import enable_halving_search_cv
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, train_test_split
@@ -55,7 +56,7 @@ X_reduced = X[useful_features]
 
 useful_features.to_csv("useful_features.csv", index=False)
 
-split_index = int(len(X_reduced) * 0.8)
+split_index = int(len(X_reduced) * 0.7)
 
 X_train, X_test = X_reduced.iloc[:split_index], X_reduced.iloc[split_index:]
 y_train, y_test = y.iloc[:split_index], y.iloc[split_index:]
@@ -81,6 +82,21 @@ y_pred = rf.predict(X_test)
 
 print(classification_report(y_test, y_pred))
 
+train_preds = rf.predict(X_train)
+test_preds = rf.predict(X_test)
+
+train_accuracy = accuracy_score(y_train, train_preds)
+test_accuracy = accuracy_score(y_test, test_preds)
+
+print("Training Accuracy:", train_accuracy)
+print("Test Accuracy:", test_accuracy)
+
+print(len(y_test))
+
+cm = confusion_matrix(y_test, test_preds)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["loss", "win"])
+disp.plot(cmap=plt.cm.Blues)
+plt.show()
 
 joblib.dump(rf, "Prediction-Model.job")
 
