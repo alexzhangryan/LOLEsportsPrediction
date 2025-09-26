@@ -39,22 +39,22 @@ if "champion" not in st.session_state:
     st.session_state.champion = "TBD"
 if "swiss_round_1" not in st.session_state:
     st.session_state.swiss_round_1 = [
-        ["Vivo Keyd Stars", "tbd"],
-        ["FlyQuest", "tbd"],
-        ["100 Thieves", "tbd"],
-        ["G2 Esports", "tbd"],
-        ["Movistar KOI", "tbd"],
-        ["Fnatic", "tbd"],
-        ["CTBC Flying Oyster", "tbd"],
-        ["PSG Talon", "tbd"],
-        ["Team Secret Whales", "tbd"],
-        ["KT Rolster", "tbd"],
-        ["Hanwha Life Esports", "tbd"],
         ["Gen.G", "tbd"],
-        ["Bilibili Gaming", "tbd"],
-        ["Anyone's Legend", "tbd"],
-        ["Top Esports", "tbd"],
         ["TBD", "tbd"],
+        ["Hanwha Life Esports", "tbd"],
+        ["Vivo Keyd Stars", "tbd"],
+        ["Anyone's Legend", "tbd"],
+        ["Team Secret Whales", "tbd"],
+        ["Bilibili Gaming", "tbd"],
+        ["100 Thieves", "tbd"],
+        ["FlyQuest", "tbd"],
+        ["Fnatic", "tbd"],
+        ["Top Esports", "tbd"],
+        ["Movistar KOI", "tbd"],
+        ["KT Rolster", "tbd"],
+        ["PSG Talon", "tbd"],
+        ["G2 Esports", "tbd"],
+        ["CTBC Flying Oyster", "tbd"],
     ]
 if "swiss_index" not in st.session_state:
     st.session_state.swiss_index = 1
@@ -92,7 +92,7 @@ def click_playin():
     st.session_state.playins_teams[
         find_team_index(st.session_state.playins_teams, prediction[1])
     ][1] = "loss"
-    st.session_state.swiss_round_1[-1] = [prediction[0], "tbd"]
+    st.session_state.swiss_round_1[1] = [prediction[0], "tbd"]
 
 
 def click_swiss():
