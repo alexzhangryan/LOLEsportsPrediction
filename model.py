@@ -16,39 +16,39 @@ import create_prediction_df
 import joblib
 
 
-
 training_data = pd.read_csv("predict_train.csv")
 training_data = training_data.drop(columns="Unnamed: 0")
 
 
-#%%
+# %%
 
 encoded_data = pd.get_dummies(training_data, dtype=int)
-#print(encoded_data.to_string())
+# print(encoded_data.to_string())
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
 X = encoded_data.iloc[:, 1:]
 y = encoded_data.iloc[:, 0]
 
-#print(training_data.to_string())
-#%%
-X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=17, test_size=0.2)
+# print(training_data.to_string())
+# %%
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, stratify=y, random_state=17, test_size=0.2
+)
 rf = xgb.XGBClassifier(tree_method="hist", early_stopping_rounds=2)
 rf.fit(X_train, y_train, eval_set=[(X_test, y_test)])
 
 y_pred = rf.predict(X_test)
-#print(len(y))
-#print(len(y_pred))
+# print(len(y))
+# print(len(y_pred))
 rf.score(X_test, y_test)
 
 
 print(classification_report(y_test, y_pred))
-feature_importance = pd.DataFrame({
-    "importance": rf.feature_importances_, 
-    "feature": X.columns
-})
+feature_importance = pd.DataFrame(
+    {"importance": rf.feature_importances_, "feature": X.columns}
+)
 
-#second retrain
+# second retrain
 
 useful_features = feature_importance[feature_importance["importance"] > 0]["feature"]
 
@@ -64,16 +64,16 @@ y_train, y_test = y.iloc[:split_index], y.iloc[split_index:]
 
 rf = xgb.XGBClassifier(
     tree_methods="hist",
-    n_estimators = 1000,
-    learning_rate = 0.1,
-    max_depth= 3,
-    min_child_weight = 7,
-    gamma = 0.1,
-    subsample = 0.8,
-    colsample_bytree = 0.8,
-    eta = 0.1,
-    early_stopping_rounds = 10,
-    eval_metrics = "logloss"
+    n_estimators=1000,
+    learning_rate=0.1,
+    max_depth=3,
+    min_child_weight=7,
+    gamma=0.1,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    eta=0.1,
+    early_stopping_rounds=10,
+    eval_metrics="logloss",
 )
 
 rf.fit(X_train, y_train, eval_set=[(X_test, y_test)], verbose=False)
@@ -92,17 +92,11 @@ print("Training Accuracy:", train_accuracy)
 print("Test Accuracy:", test_accuracy)
 
 print(len(y_test))
-
-cm = confusion_matrix(y_test, test_preds)
-disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["loss", "win"])
-disp.plot(cmap=plt.cm.Blues)
-plt.show()
-
 joblib.dump(rf, "Prediction-Model.job")
 
-#cutoff for prediction
+# cutoff for prediction
 
 
-#print(training_data.head(1).to_string())
-#print(match_row.to_string())
-#%%
+# print(training_data.head(1).to_string())
+# print(match_row.to_string())
+# %%

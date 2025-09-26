@@ -120,9 +120,9 @@ def predict(blue_team, red_team):
     final_score = round(series_wins / 1000, 1)
 
     if final_score >= 50:
-        return blue_team, red_team
+        return blue_team, red_team, final_score
     else:
-        return red_team, blue_team
+        return red_team, blue_team, (100 - final_score)
 
 
 # %%

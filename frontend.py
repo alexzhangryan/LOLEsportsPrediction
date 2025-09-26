@@ -272,7 +272,7 @@ team2 = st.selectbox(
 
 if team1 is not None and team2 is not None:
     prediction = create_prediction_df.predict(team1, team2)
-    st.header(prediction)
+    st.header(f"{prediction[0]} will win with {prediction[2]}% confidence")
 
 st.button("Predict Playins", on_click=click_playin)
 
