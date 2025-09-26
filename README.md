@@ -4,7 +4,7 @@ A gradient boosted decision tree that predicts the outcome of professional leagu
 Data handled with Pandas and model created using Scikit-Learn and XGBoost 
 # How to Use
 
-To check it out go to this link: [streamlit app](https://alexzhangryan-lolesportsrandomforest-frontend-aqp2qd.streamlit.app/)
+To check it out go to this link: [streamlit app](https://lolesportsprediction.streamlit.app/)
 
 # Installation
 1. clone the repository
