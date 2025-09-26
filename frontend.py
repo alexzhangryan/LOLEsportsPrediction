@@ -96,7 +96,6 @@ def click_playin():
 
 
 def click_swiss():
-    st.session_state.swiss_clicked = True
     if st.session_state.swiss_index == 1:
         for i in range(0, len(st.session_state.swiss_round_1), 2):
             predict = create_prediction_df.predict(
