@@ -1,4 +1,4 @@
-#%%
+# %%
 import joblib
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ pd.DataFrame.ts = pd.DataFrame.to_string
 player_data = pd.read_csv("players_export.csv")
 player_data = player_data.drop(columns="Unnamed: 0")
 
-blue_teams = player_data.filter(regex='blue_')
+blue_teams = player_data.filter(regex="blue_")
 red_teams = player_data.filter(regex="red_")
 
 blue_teams = blue_teams.iloc[::-1]
@@ -17,7 +17,8 @@ red_teams = red_teams.iloc[::-1]
 
 test_data = pd.read_csv("predict_train.csv")
 test_data = test_data.drop(columns=["Unnamed: 0", "result"])
-#print(test_data.head(1).ts())
+# print(test_data.head(1).ts())
+
 
 def build_data_row(blue_team, red_team):
     df = pd.DataFrame()
@@ -49,14 +50,27 @@ def build_data_row(blue_team, red_team):
 
     match_row["blue_elo"] = blue_elo_col.values[0]
     match_row["red_elo"] = red_elo_col.values[0]
-    match_row["elo_diff"] = match_row["blue_elo"].values[0] - match_row["red_elo"].values[0]
+    match_row["elo_diff"] = (
+        match_row["blue_elo"].values[0] - match_row["red_elo"].values[0]
+    )
 
-    match_row["top_elo_diff"] = match_row["blue_top_elo"].values[0] - match_row["red_top_elo"].values[0]
-    match_row["jng_elo_diff"] = match_row["blue_jng_elo"].values[0] - match_row["red_jng_elo"].values[0]
-    match_row["mid_elo_diff"] = match_row["blue_mid_elo"].values[0] - match_row["red_mid_elo"].values[0]
-    match_row["bot_elo_diff"] = match_row["blue_bot_elo"].values[0] - match_row["red_bot_elo"].values[0]
-    match_row["sup_elo_diff"] = match_row["blue_sup_elo"].values[0] - match_row["red_sup_elo"].values[0]
+    match_row["top_elo_diff"] = (
+        match_row["blue_top_elo"].values[0] - match_row["red_top_elo"].values[0]
+    )
+    match_row["jng_elo_diff"] = (
+        match_row["blue_jng_elo"].values[0] - match_row["red_jng_elo"].values[0]
+    )
+    match_row["mid_elo_diff"] = (
+        match_row["blue_mid_elo"].values[0] - match_row["red_mid_elo"].values[0]
+    )
+    match_row["bot_elo_diff"] = (
+        match_row["blue_bot_elo"].values[0] - match_row["red_bot_elo"].values[0]
+    )
+    match_row["sup_elo_diff"] = (
+        match_row["blue_sup_elo"].values[0] - match_row["red_sup_elo"].values[0]
+    )
     return match_row
+
 
 def build_data(blue_team, red_team):
     blue_row = build_data_row(blue_team, red_team)
@@ -84,7 +98,7 @@ def predict(blue_team, red_team):
 
         score, opp_score = 0, 0
         game_number = 1
-        
+
         while score < 3 and opp_score < 3:
             blue_side = not blue_side
             if blue_side:
@@ -102,12 +116,13 @@ def predict(blue_team, red_team):
             game_number += 1
         if score == 3:
             series_wins += 1
-        
+
     final_score = round(series_wins / 1000, 1)
 
     if final_score >= 50:
-        return f"{blue_team} will win with {final_score}% confidence"
+        return blue_team, red_team
     else:
-        return f"{red_team} will win with {100 - final_score}% confidence"
+        return red_team, blue_team
 
-#%%
+
+# %%
